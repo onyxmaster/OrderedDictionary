@@ -54,8 +54,8 @@ namespace OrderedDictionary
         /// <inheritdoc />
         public void Add(KeyValuePair<TKey, TValue> item)
         {
-            _orderedKeys.Add(item.Key);
             _innerDictionary.Add(item.Key, item.Value);
+            _orderedKeys.Add(item.Key);
         }
 
         /// <inheritdoc />
