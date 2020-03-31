@@ -12,7 +12,7 @@ namespace OrderedDictionary
     /// <typeparam name="TValue"></typeparam>
     public class OrderedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
     {
-        private readonly List<TKey> _orderedKeys;
+        private readonly LinkedList<TKey> _orderedKeys;
         private readonly Dictionary<TKey, TValue> _innerDictionary;
 
         private readonly KeyCollection _keyCollection;
@@ -33,7 +33,7 @@ namespace OrderedDictionary
         public OrderedDictionary(int capacity, IEqualityComparer<TKey>? comparer)
         {
             _innerDictionary = new Dictionary<TKey, TValue>(capacity, comparer);
-            _orderedKeys = new List<TKey>(capacity);
+            _orderedKeys = new LinkedList<TKey>();
 
             _keyCollection = new KeyCollection(_orderedKeys, _innerDictionary);
             _valueCollection = new ValueCollection(_orderedKeys, _innerDictionary);
@@ -55,14 +55,14 @@ namespace OrderedDictionary
         public void Add(KeyValuePair<TKey, TValue> item)
         {
             _innerDictionary.Add(item.Key, item.Value);
-            _orderedKeys.Add(item.Key);
+            _orderedKeys.AddLast(item.Key);
         }
 
         /// <inheritdoc />
         public void Clear()
         {
-            _orderedKeys.Clear();
             _innerDictionary.Clear();
+            _orderedKeys.Clear();
         }
 
         /// <inheritdoc />
@@ -86,19 +86,17 @@ namespace OrderedDictionary
                 throw new ArgumentException("Array must have available space for copying.");
             }
 
-            var count = _orderedKeys.Count;
-            for (int i = 0; i < count; i++)
+            foreach (var key in _orderedKeys)
             {
                 // Not great not terrible.
-                array[index++] = new KeyValuePair<TKey, TValue>(_orderedKeys[i], _innerDictionary[_orderedKeys[i]]);
+                array[index++] = new KeyValuePair<TKey, TValue>(key, _innerDictionary[key]);
             }
         }
 
         /// <inheritdoc />
         public bool Remove(KeyValuePair<TKey, TValue> item)
         {
-            _orderedKeys.Remove(item.Key);
-            return _innerDictionary.Remove(item.Key);
+            return _innerDictionary.Remove(item.Key) && _orderedKeys.Remove(item.Key);
         }
 
         /// <inheritdoc />
@@ -111,7 +109,7 @@ namespace OrderedDictionary
         public void Add(TKey key, TValue value)
         {
             _innerDictionary.Add(key, value);
-            _orderedKeys.Add(key);
+            _orderedKeys.AddLast(key);
         }
 
         /// <inheritdoc />
@@ -123,8 +121,7 @@ namespace OrderedDictionary
         /// <inheritdoc />
         public bool Remove(TKey key)
         {
-            _orderedKeys.Remove(key);
-            return _innerDictionary.Remove(key);
+            return _innerDictionary.Remove(key) && _orderedKeys.Remove(key);
         }
 
         /// <inheritdoc />
@@ -139,9 +136,10 @@ namespace OrderedDictionary
             get => _innerDictionary[key];
             set
             {
+                // Maybe here we should place key to the end of the list in all cases and remove from inside.
                 if (!_innerDictionary.ContainsKey(key))
                 {
-                    _orderedKeys.Add(key);
+                    _orderedKeys.AddLast(key);
                 }
 
                 _innerDictionary[key] = value;
@@ -156,10 +154,10 @@ namespace OrderedDictionary
 
         private sealed class KeyCollection : ICollection<TKey>
         {
-            private readonly List<TKey> _innerList;
+            private readonly LinkedList<TKey> _innerList;
             private readonly Dictionary<TKey, TValue> _dictionary;
 
-            public KeyCollection(List<TKey> innerList, Dictionary<TKey, TValue> dictionary)
+            public KeyCollection(LinkedList<TKey> innerList, Dictionary<TKey, TValue> dictionary)
             {
                 _innerList = innerList;
                 _dictionary = dictionary;
@@ -193,10 +191,10 @@ namespace OrderedDictionary
 
         private sealed class ValueCollection : ICollection<TValue>
         {
-            private readonly List<TKey> _innerList;
+            private readonly LinkedList<TKey> _innerList;
             private readonly Dictionary<TKey, TValue> _dictionary;
 
-            public ValueCollection(List<TKey> innerList, Dictionary<TKey, TValue> dictionary)
+            public ValueCollection(LinkedList<TKey> innerList, Dictionary<TKey, TValue> dictionary)
             {
                 _innerList = innerList;
                 _dictionary = dictionary;
@@ -219,10 +217,9 @@ namespace OrderedDictionary
                     throw new ArgumentException("Array must have available space for copying.");
                 }
 
-                var count = _innerList.Count;
-                for (int i = 0; i < count; i++)
+                foreach (var key in _innerList)
                 {
-                    array[index++] = _dictionary[_innerList[i]];
+                    array[index++] = _dictionary[key];
                 }
             }
 
