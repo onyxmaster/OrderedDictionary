@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 using NUnit.Framework;
@@ -9,14 +10,15 @@ namespace OrderedDictionaryTests
         [Test]
         public void IsRemoveConstantTime()
         {
+            var rng = new Random();
             DictionaryTesting.TestComplexityGrowth(
                 DictionaryTesting.CreateOrderedDictionary,
-                dictionary => dictionary.Remove(-1),
+                dictionary => dictionary.Remove(rng.Next()),
                 (dictionary, count) =>
                 {
                     for (var i = 0; i < count; i++)
                     {
-                        dictionary.Remove(i);
+                        dictionary.Remove(rng.Next(count));
                     }
                 });
         }
@@ -24,14 +26,21 @@ namespace OrderedDictionaryTests
         [Test]
         public void IsKvpRemoveConstantTime()
         {
+            var rng = new Random();
             DictionaryTesting.TestComplexityGrowth(
                 DictionaryTesting.CreateOrderedDictionary,
-                dictionary => dictionary.Remove(KeyValuePair.Create(-1, -1)),
+                dictionary =>
+                {
+                    var j = rng.Next(dictionary.Count);
+                    var kvp = KeyValuePair.Create(j, j);
+                    dictionary.Remove(kvp);
+                },
                 (dictionary, count) =>
                 {
                     for (var i = 0; i < count; i++)
                     {
-                        var kvp = KeyValuePair.Create(i, i);
+                        var j = rng.Next(count);
+                        var kvp = KeyValuePair.Create(j, j);
                         dictionary.Remove(kvp);
                     }
                 });

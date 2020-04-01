@@ -34,7 +34,7 @@ namespace OrderedDictionaryTests
             CheckOptimized();
             var previousSpentTime = TimeSpan.MaxValue;
             var monotonicTimer = new Stopwatch();
-            for (var capacity = 10000; capacity < 100000000; capacity *= 2)
+            for (var capacity = 10000; capacity < 10000000; capacity *= 2)
             {
                 var dictionary = create(capacity);
                 arrange(dictionary);
